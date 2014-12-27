@@ -1,0 +1,225 @@
+package mycalc
+
+import (
+	"bufio"
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"strings"
+	"unicode/utf8"
+)
+
+type item struct {
+	typ itemType
+	pos int
+	val string
+}
+
+func (i item) String() string {
+	switch {
+	case i.typ == itemEof:
+		return "eof"
+	case i.typ == itemError:
+		return i.val
+	}
+	return fmt.Sprintf("%s:%q", i.typ, i.val)
+}
+
+type itemType int
+
+const (
+	itemAdd itemType = iota
+	itemSub
+	itemMul
+	itemDiv
+	itemDoubleLiteral
+	itemEol
+	itemEof
+	itemError
+)
+
+const eof = -1
+
+func (t itemType) String() string {
+	switch t {
+	case itemAdd:
+		return "add"
+	case itemSub:
+		return "sub"
+	case itemMul:
+		return "mul"
+	case itemDiv:
+		return "div"
+	case itemDoubleLiteral:
+		return "doubleLiteral"
+	case itemEol:
+		return "eol"
+	default:
+		panic(errors.New("unexpected itemType"))
+	}
+}
+
+type stateFn func(*lexer) stateFn
+
+type lexer struct {
+	input  *bufio.Reader
+	buffer bytes.Buffer
+	state  stateFn
+	pos    int
+	start  int
+	items  chan item
+}
+
+func (l *lexer) nextItem() item {
+	item := <-l.items
+	return item
+}
+
+func lex(input io.Reader) *lexer {
+	l := &lexer{
+		input: bufio.NewReader(input),
+		items: make(chan item),
+	}
+	go l.run()
+	return l
+}
+
+func (l *lexer) run() {
+	for l.state = lexInitial; l.state != nil; {
+		l.state = l.state(l)
+	}
+}
+
+func (l *lexer) next() rune {
+	r, w, err := l.input.ReadRune()
+	if err == io.EOF {
+		return eof
+	}
+	l.pos += w
+	l.buffer.WriteRune(r)
+	return r
+}
+
+func (l *lexer) peek() rune {
+	lead, err := l.input.Peek(1)
+	if err == io.EOF {
+		return eof
+	} else if err != nil {
+		l.errorf("%s", err.Error())
+		return 0
+	}
+
+	p, err := l.input.Peek(runeLen(lead[0]))
+	if err == io.EOF {
+		return eof
+	} else if err != nil {
+		l.errorf("%s", err.Error())
+		return 0
+	}
+	r, _ := utf8.DecodeRune(p)
+	return r
+}
+
+func runeLen(lead byte) int {
+	if lead < 0xC0 {
+		return 1
+	} else if lead < 0xE0 {
+		return 2
+	} else if lead < 0xF0 {
+		return 3
+	} else {
+		return 4
+	}
+}
+
+func (l *lexer) emit(t itemType) {
+	l.items <- item{t, l.start, l.buffer.String()}
+	l.start = l.pos
+	l.buffer.Truncate(0)
+}
+
+func (l *lexer) accept(valid string) bool {
+	if strings.IndexRune(valid, l.peek()) >= 0 {
+		l.next()
+		return true
+	}
+	return false
+}
+
+func (l *lexer) acceptRun(valid string) {
+	for strings.IndexRune(valid, l.peek()) >= 0 {
+		l.next()
+	}
+}
+
+func (l *lexer) errorf(format string, args ...interface{}) stateFn {
+	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}
+	return nil
+}
+
+func (l *lexer) hasPrefix(prefix string) bool {
+	p, err := l.input.Peek(len(prefix))
+	if err == io.EOF {
+		return false
+	} else if err != nil {
+		l.errorf("%v", err.Error)
+		return false
+	}
+	return string(p) == prefix
+}
+
+func (l *lexer) nextRuneCount(count int) {
+	for i := 0; i < count; i++ {
+		l.next()
+	}
+}
+
+func lexInitial(l *lexer) stateFn {
+LOOP:
+	for {
+		r := l.peek()
+		switch r {
+		case '+':
+			l.next()
+			l.emit(itemAdd)
+		case '-':
+			l.next()
+			l.emit(itemSub)
+		case '*':
+			l.next()
+			l.emit(itemMul)
+		case '/':
+			l.next()
+			l.emit(itemDiv)
+		case '\n':
+			l.next()
+			l.emit(itemEol)
+		case eof:
+			l.next()
+			break LOOP
+		default:
+			if strings.IndexRune("0123456789", r) >= 0 {
+				return lexDoubleLiteral
+			}
+		}
+	}
+	l.emit(itemEof)
+	return nil
+}
+
+func lexDoubleLiteral(l *lexer) stateFn {
+	if l.accept("123456789") {
+		l.acceptRun("0123456789")
+	} else if !l.accept("0") {
+		return l.errorf("bad digit for number")
+	}
+	if l.accept(".") {
+		if !l.accept("0123456789") {
+			return l.errorf("digit not appear next to dot")
+		}
+		l.acceptRun("0123456789")
+	}
+	l.emit(itemDoubleLiteral)
+	return lexInitial
+}
