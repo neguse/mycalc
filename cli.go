@@ -6,11 +6,15 @@ import (
 	"strings"
 )
 
-func RunLine(line string, w io.Writer) {
+func RunString(line string, w io.Writer) {
 	r := strings.NewReader(line)
+	RunReader(r, w)
+}
+
+func RunReader(r io.Reader, w io.Writer) {
 	l := lex(r)
 	p := parse(l.items)
 	for v := range p.output {
-		fmt.Fprint(w, v)
+		fmt.Fprintln(w, v)
 	}
 }
