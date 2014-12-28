@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/neguse/mycalc"
+	"github.com/neguse/mycalc/calc"
 )
 
 func main() {
