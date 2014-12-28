@@ -32,6 +32,8 @@ const (
 	itemMul
 	itemDiv
 	itemDoubleLiteral
+	itemLParen
+	itemRParen
 	itemEol
 	itemEof
 	itemError
@@ -51,10 +53,14 @@ func (t itemType) String() string {
 		return "div"
 	case itemDoubleLiteral:
 		return "doubleLiteral"
-	case itemEol:
-		return "eol"
+	case itemLParen:
+		return "lparen"
+	case itemRParen:
+		return "rparen"
 	case itemEof:
 		return "eof"
+	case itemEol:
+		return "eol"
 	case itemError:
 		return "error"
 	default:
@@ -202,6 +208,12 @@ LOOP:
 		case '/':
 			l.next()
 			l.emit(itemDiv)
+		case '(':
+			l.next()
+			l.emit(itemLParen)
+		case ')':
+			l.next()
+			l.emit(itemRParen)
 		case '\n':
 			l.next()
 			l.emit(itemEol)

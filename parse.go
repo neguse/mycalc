@@ -130,7 +130,17 @@ func (p *parser) term() node {
 
 func (p *parser) primaryExpression() node {
 	n := p.next()
-	if n.typ != itemDoubleLiteral {
+	if n.typ == itemLParen {
+		n2 := p.expression()
+		if n2.Type() == nodeError {
+			return n2
+		}
+		n3 := p.next()
+		if n3.typ != itemRParen {
+			return newErrorNode("expect RParen")
+		}
+		return n2
+	} else if n.typ != itemDoubleLiteral {
 		return newErrorNode("unexpected item")
 	}
 	v, err := strconv.ParseFloat(n.val, 64)

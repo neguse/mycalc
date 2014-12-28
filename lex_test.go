@@ -53,6 +53,11 @@ var lexTests = []lexTest{
 		item{itemDiv, pos{line: 1, col: 2}, "/"},
 		item{itemDoubleLiteral, pos{line: 1, col: 3}, "2"},
 		tEof4}},
+	{"paren", "(1)", []item{
+		item{itemLParen, origin, "("},
+		item{itemDoubleLiteral, pos{line: 1, col: 2}, "1"},
+		item{itemRParen, pos{line: 1, col: 3}, ")"},
+		tEof4}},
 }
 
 func collect(t *lexTest) (items []item) {

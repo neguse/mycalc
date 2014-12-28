@@ -23,6 +23,9 @@ var runTests = []runTest{
 	{"op", "+", "unexpected item\n"},
 	{"op and success", "+\n1+2", "unexpected item\n3\n"},
 	{"not expected symbol", "&", "unexpected item\n"},
+	{"paren", "(1)", "1\n"},
+	{"paren calc", "(1+2)", "3\n"},
+	{"paren calc mul", "(1+2)*3", "9\n"},
 }
 
 func TestRun(t *testing.T) {

@@ -3,7 +3,7 @@ LineList ::= Line +
 Line ::= Expression Eol
 Expression ::= Term ( ( Add | Sub )  Term ) *
 Term ::= PrimaryExpression  ( ( Mul | Div ) PrimaryExpression ) *
-PrimaryExpression ::= DoubleLiteral
+PrimaryExpression ::= DoubleLiteral | ( LParen Expression RParen )
 
 Add ::= '+'
 Sub ::= '-'
