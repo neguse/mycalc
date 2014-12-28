@@ -3,10 +3,11 @@ LineList ::= Line +
 Line ::= Expression Eol
 Expression ::= Term ( ( Add | Sub )  Term ) *
 Term ::= PrimaryExpression  ( ( Mul | Div ) PrimaryExpression ) *
-PrimaryExpression ::= DoubleLiteral | ( LParen Expression RParen )
+PrimaryExpression ::= Sub ? (DoubleLiteral | ( LParen Expression RParen ))
 
 Add ::= '+'
 Sub ::= '-'
+Minus ::= '-'
 Mul ::= '*'
 Div ::= '/'
 DoubleLiteral ::= [0-9]+ ('.' [0-9]+)?

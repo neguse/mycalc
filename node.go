@@ -20,6 +20,7 @@ type nodeType int
 
 const (
 	nodeOp nodeType = iota
+	nodeUnaryOp
 	nodeValue
 	nodeError
 )
@@ -87,6 +88,52 @@ func (n *opNode) String() string {
 		opStr = fmt.Sprintf("%d", n.opTyp)
 	}
 	return fmt.Sprintf("(%s %s %s)", opStr, n.lhs.String(), n.rhs.String())
+}
+
+type unaryOpType int
+
+const (
+	unaryOpMinus unaryOpType = iota
+)
+
+type unaryOpNode struct {
+	opTyp   unaryOpType
+	operand node
+}
+
+func newUnaryOpNode(operand node, op unaryOpType) *unaryOpNode {
+	return &unaryOpNode{
+		opTyp:   op,
+		operand: operand,
+	}
+}
+
+func (n *unaryOpNode) Type() nodeType {
+	return nodeUnaryOp
+}
+
+func (n *unaryOpNode) Evaluate() value {
+	ov := n.operand.Evaluate()
+	if ov.err != nil {
+		return value{0, ov.err}
+	}
+	switch n.opTyp {
+	case unaryOpMinus:
+		return value{-ov.v, nil}
+	default:
+		return value{0, errors.New("unexpected opTyp")}
+	}
+}
+
+func (n *unaryOpNode) String() string {
+	var opStr string
+	switch n.opTyp {
+	case unaryOpMinus:
+		opStr = "-"
+	default:
+		opStr = fmt.Sprintf("%d", n.opTyp)
+	}
+	return fmt.Sprintf("(%s %s)", opStr, n.operand.String())
 }
 
 type valueNode struct {

@@ -129,6 +129,12 @@ func (p *parser) term() node {
 }
 
 func (p *parser) primaryExpression() node {
+	isMinus := false
+	if p.peek().typ == itemSub {
+		isMinus = true
+		p.next()
+	}
+
 	n := p.next()
 	if n.typ == itemLParen {
 		n2 := p.expression()
@@ -139,7 +145,12 @@ func (p *parser) primaryExpression() node {
 		if n3.typ != itemRParen {
 			return newErrorNode("expect RParen")
 		}
-		return n2
+		if !isMinus {
+			return n2
+		} else {
+			return newUnaryOpNode(n2, unaryOpMinus)
+		}
+
 	} else if n.typ != itemDoubleLiteral {
 		return newErrorNode("unexpected item")
 	}
@@ -147,5 +158,10 @@ func (p *parser) primaryExpression() node {
 	if err != nil {
 		return newErrorNode("unexpected value " + err.Error())
 	}
-	return newValueNode(v)
+
+	if !isMinus {
+		return newValueNode(v)
+	} else {
+		return newUnaryOpNode(newValueNode(v), unaryOpMinus)
+	}
 }
