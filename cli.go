@@ -15,6 +15,10 @@ func RunReader(r io.Reader, w io.Writer) {
 	l := lex(r)
 	p := parse(l.items)
 	for v := range p.output {
-		fmt.Fprintln(w, v)
+		if v.err == nil {
+			fmt.Fprintln(w, v.v)
+		} else {
+			fmt.Fprintln(w, v.err)
+		}
 	}
 }

@@ -1,8 +1,19 @@
 package mycalc
 
+import (
+	"errors"
+	"fmt"
+)
+
+type value struct {
+	v   float64
+	err error
+}
+
 type node interface {
 	Type() nodeType
-	Evaluate() float64
+	Evaluate() value
+	String() string
 }
 
 type nodeType int
@@ -10,6 +21,7 @@ type nodeType int
 const (
 	nodeOp nodeType = iota
 	nodeValue
+	nodeError
 )
 
 type opType int
@@ -38,30 +50,52 @@ func (n *opNode) Type() nodeType {
 	return nodeOp
 }
 
-func (n *opNode) Evaluate() float64 {
+func (n *opNode) Evaluate() value {
 	lv := n.lhs.Evaluate()
 	rv := n.rhs.Evaluate()
+	if lv.err != nil {
+		return value{0, lv.err}
+	} else if rv.err != nil {
+		return value{0, rv.err}
+	}
 	switch n.opTyp {
 	case opAdd:
-		return lv + rv
+		return value{lv.v + rv.v, nil}
 	case opSub:
-		return lv - rv
+		return value{lv.v - rv.v, nil}
 	case opMul:
-		return lv * rv
+		return value{lv.v * rv.v, nil}
 	case opDiv:
-		return lv / rv
+		return value{lv.v / rv.v, nil}
 	default:
-		panic("unknown opTyp")
+		return value{0, errors.New("unexpected opTyp")}
 	}
 }
 
+func (n *opNode) String() string {
+	var opStr string
+	switch n.opTyp {
+	case opAdd:
+		opStr = "+"
+	case opSub:
+		opStr = "-"
+	case opMul:
+		opStr = "*"
+	case opDiv:
+		opStr = "/"
+	default:
+		opStr = fmt.Sprintf("%d", n.opTyp)
+	}
+	return fmt.Sprintf("(%s %s %s)", opStr, n.lhs.String(), n.rhs.String())
+}
+
 type valueNode struct {
-	value float64
+	v float64
 }
 
 func newValueNode(v float64) *valueNode {
 	return &valueNode{
-		value: v,
+		v: v,
 	}
 }
 
@@ -69,6 +103,32 @@ func (n *valueNode) Type() nodeType {
 	return nodeValue
 }
 
-func (n *valueNode) Evaluate() float64 {
-	return n.value
+func (n *valueNode) Evaluate() value {
+	return value{n.v, nil}
+}
+
+func (n *valueNode) String() string {
+	return fmt.Sprintf("%f", n.v)
+}
+
+type errorNode struct {
+	err string
+}
+
+func newErrorNode(err string) *errorNode {
+	return &errorNode{
+		err: err,
+	}
+}
+
+func (n *errorNode) Type() nodeType {
+	return nodeError
+}
+
+func (n *errorNode) Evaluate() value {
+	return value{0, errors.New(n.err)}
+}
+
+func (n *errorNode) String() string {
+	return n.err
 }

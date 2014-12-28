@@ -11,40 +11,48 @@ type lexTest struct {
 	items []item
 }
 
-var tEof = item{itemEof, 0, ""}
+var origin = pos{line: 1, col: 1}
+
+var tEof1 = item{itemEof, origin, ""}
+var tEof2 = item{itemEof, pos{line: 1, col: 2}, ""}
+var tEof3 = item{itemEof, pos{line: 1, col: 3}, ""}
+var tEof4 = item{itemEof, pos{line: 1, col: 4}, ""}
 
 var lexTests = []lexTest{
-	{"empty", "", []item{tEof}},
-	{"number1", "1", []item{item{itemDoubleLiteral, 0, "1"}, tEof}},
-	{"number11", "11", []item{item{itemDoubleLiteral, 0, "11"}, tEof}},
-	{"number0", "0", []item{item{itemDoubleLiteral, 0, "0"}, tEof}},
-	{"number1.0", "1.0", []item{item{itemDoubleLiteral, 0, "1.0"}, tEof}},
-	{"number1.", "1.", []item{item{itemError, 0, "digit not appear next to dot"}}},
+	{"empty", "", []item{tEof1}},
+	{"number1", "1", []item{item{itemDoubleLiteral, origin, "1"}, tEof2}},
+	{"number11", "11", []item{item{itemDoubleLiteral, origin, "11"}, tEof3}},
+	{"number0", "0", []item{item{itemDoubleLiteral, origin, "0"}, tEof2}},
+	{"number1.0", "1.0", []item{item{itemDoubleLiteral, origin, "1.0"}, tEof4}},
+	{"number1.", "1.", []item{item{itemError, origin, "digit not appear next to dot"}}},
+	{"number01", "01", []item{item{itemDoubleLiteral, origin, "01"}, tEof3}},
+	{".", ".", []item{item{itemError, origin, "unexpected character"}}},
+	{"i", "i", []item{item{itemError, origin, "unexpected character"}}},
 	{"two line", "1\n2", []item{
-		item{itemDoubleLiteral, 0, "1"},
-		item{itemEol, 1, "\n"},
-		item{itemDoubleLiteral, 2, "2"},
-		tEof}},
+		item{itemDoubleLiteral, origin, "1"},
+		item{itemEol, pos{line: 1, col: 2}, "\n"},
+		item{itemDoubleLiteral, pos{line: 2, col: 1}, "2"},
+		item{itemEof, pos{line: 2, col: 2}, ""}}},
 	{"add", "1+2", []item{
-		item{itemDoubleLiteral, 0, "1"},
-		item{itemAdd, 1, "+"},
-		item{itemDoubleLiteral, 2, "2"},
-		tEof}},
+		item{itemDoubleLiteral, origin, "1"},
+		item{itemAdd, pos{line: 1, col: 2}, "+"},
+		item{itemDoubleLiteral, pos{line: 1, col: 3}, "2"},
+		tEof4}},
 	{"sub", "1-2", []item{
-		item{itemDoubleLiteral, 0, "1"},
-		item{itemSub, 1, "-"},
-		item{itemDoubleLiteral, 2, "2"},
-		tEof}},
+		item{itemDoubleLiteral, origin, "1"},
+		item{itemSub, pos{line: 1, col: 2}, "-"},
+		item{itemDoubleLiteral, pos{line: 1, col: 3}, "2"},
+		tEof4}},
 	{"mul", "1*2", []item{
-		item{itemDoubleLiteral, 0, "1"},
-		item{itemMul, 1, "*"},
-		item{itemDoubleLiteral, 2, "2"},
-		tEof}},
+		item{itemDoubleLiteral, origin, "1"},
+		item{itemMul, pos{line: 1, col: 2}, "*"},
+		item{itemDoubleLiteral, pos{line: 1, col: 3}, "2"},
+		tEof4}},
 	{"div", "1/2", []item{
-		item{itemDoubleLiteral, 0, "1"},
-		item{itemDiv, 1, "/"},
-		item{itemDoubleLiteral, 2, "2"},
-		tEof}},
+		item{itemDoubleLiteral, origin, "1"},
+		item{itemDiv, pos{line: 1, col: 2}, "/"},
+		item{itemDoubleLiteral, pos{line: 1, col: 3}, "2"},
+		tEof4}},
 }
 
 func collect(t *lexTest) (items []item) {
@@ -60,7 +68,7 @@ func collect(t *lexTest) (items []item) {
 	return
 }
 
-func equal(i1, i2 []item, checkPos bool) bool {
+func equal(i1, i2 []item) bool {
 	if len(i1) != len(i2) {
 		return false
 	}
@@ -71,7 +79,7 @@ func equal(i1, i2 []item, checkPos bool) bool {
 		if i1[k].val != i2[k].val {
 			return false
 		}
-		if checkPos && i1[k].pos != i2[k].pos {
+		if i1[k].pos != i2[k].pos {
 			return false
 		}
 	}
@@ -81,7 +89,7 @@ func equal(i1, i2 []item, checkPos bool) bool {
 func TestLex(t *testing.T) {
 	for _, test := range lexTests {
 		items := collect(&test)
-		if !equal(items, test.items, false) {
+		if !equal(items, test.items) {
 			t.Errorf("%s: got\n\t%+v\nexpected\n\t%v", test.name, items, test.items)
 		}
 	}
@@ -94,14 +102,14 @@ type stringTest struct {
 }
 
 var stringTests = []stringTest{
-	{"add", item{itemAdd, 0, "+"}, "add:\"+\""},
-	{"sub", item{itemSub, 0, "-"}, "sub:\"-\""},
-	{"mul", item{itemMul, 0, "*"}, "mul:\"*\""},
-	{"div", item{itemDiv, 0, "/"}, "div:\"/\""},
-	{"doubleLiteral", item{itemDoubleLiteral, 0, "1.0"}, "doubleLiteral:\"1.0\""},
-	{"eol", item{itemEol, 0, ""}, "eol:\"\""},
-	{"eof", item{itemEof, 0, ""}, "eof"},
-	{"error", item{itemError, 0, "error"}, "error"},
+	{"add", item{itemAdd, origin, "+"}, `add:"+"(1,1)`},
+	{"sub", item{itemSub, origin, "-"}, `sub:"-"(1,1)`},
+	{"mul", item{itemMul, origin, "*"}, `mul:"*"(1,1)`},
+	{"div", item{itemDiv, origin, "/"}, `div:"/"(1,1)`},
+	{"doubleLiteral", item{itemDoubleLiteral, origin, "1.0"}, `doubleLiteral:"1.0"(1,1)`},
+	{"eol", item{itemEol, origin, ""}, `eol:""(1,1)`},
+	{"eof", item{itemEof, origin, ""}, `eof:""(1,1)`},
+	{"error", item{itemError, origin, "error"}, `error:"error"(1,1)`},
 }
 
 func TestString(t *testing.T) {

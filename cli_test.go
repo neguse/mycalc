@@ -20,6 +20,9 @@ var runTests = []runTest{
 	{"addmul", "4+2*5", "14\n"},
 	{"subdiv", "6-4/2", "4\n"},
 	{"twoline", "1+2\n3+4", "3\n7\n"},
+	{"op", "+", "unexpected item\n"},
+	{"op and success", "+\n1+2", "unexpected item\n3\n"},
+	{"not expected symbol", "&", "unexpected item\n"},
 }
 
 func TestRun(t *testing.T) {

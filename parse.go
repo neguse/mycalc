@@ -1,26 +1,30 @@
 package mycalc
 
 import (
-	"fmt"
+	"errors"
 	"strconv"
 )
 
 type parser struct {
 	input     chan item
-	output    chan float64
+	output    chan value
 	token     [1]item
 	peekCount int
 }
 
-func (p *parser) nextValue() float64 {
-	v := <-p.output
-	return v
+func (p *parser) nextValue() value {
+	v, ok := <-p.output
+	if ok {
+		return v
+	} else {
+		return value{0, errors.New("receive failed")}
+	}
 }
 
 func parse(input chan item) *parser {
 	p := &parser{
 		input:  input,
-		output: make(chan float64),
+		output: make(chan value),
 	}
 	go p.parse()
 	return p
@@ -50,11 +54,8 @@ func (p *parser) parse() {
 		p.output <- exp.Evaluate()
 
 		// Skip to next eol for recovering error.
-		for {
-			t := p.peek().typ
-			if t == itemEol || t == itemEof {
-				break
-			}
+		for p.peek().typ != itemEol && p.peek().typ != itemEof {
+			// TODO: output as error
 			p.next()
 		}
 		if p.peek().typ == itemEol {
@@ -64,8 +65,14 @@ func (p *parser) parse() {
 	close(p.output)
 }
 
+func (p *parser) errorf(format string, args ...interface{}) {
+}
+
 func (p *parser) expression() node {
 	t1 := p.term()
+	if t1.Type() == nodeError {
+		return t1
+	}
 	for {
 		if p.peek().typ == itemAdd || p.peek().typ == itemSub {
 			op := p.next()
@@ -79,6 +86,9 @@ func (p *parser) expression() node {
 				panic("unknown itemType")
 			}
 			t2 := p.term()
+			if t2.Type() == nodeError {
+				return t2
+			}
 			// FIXME: Fix to left-to-right associative.
 			t1 = newOpNode(t1, t2, t)
 		} else {
@@ -90,6 +100,9 @@ func (p *parser) expression() node {
 
 func (p *parser) term() node {
 	e1 := p.primaryExpression()
+	if e1.Type() == nodeError {
+		return e1
+	}
 	for {
 		if p.peek().typ == itemMul || p.peek().typ == itemDiv {
 			op := p.next()
@@ -103,6 +116,9 @@ func (p *parser) term() node {
 				panic("unknown itemType")
 			}
 			e2 := p.primaryExpression()
+			if e2.Type() == nodeError {
+				return e2
+			}
 			// FIXME: Fix to left-to-right associative.
 			e1 = newOpNode(e1, e2, t)
 		} else {
@@ -115,12 +131,11 @@ func (p *parser) term() node {
 func (p *parser) primaryExpression() node {
 	n := p.next()
 	if n.typ != itemDoubleLiteral {
-		panic("unexpected item")
+		return newErrorNode("unexpected item")
 	}
 	v, err := strconv.ParseFloat(n.val, 64)
 	if err != nil {
-		fmt.Print(v, err)
-		panic("unexpected value")
+		return newErrorNode("unexpected value " + err.Error())
 	}
 	return newValueNode(v)
 }

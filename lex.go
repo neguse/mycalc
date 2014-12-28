@@ -12,18 +12,16 @@ import (
 
 type item struct {
 	typ itemType
-	pos int
+	pos pos
 	val string
 }
 
+type pos struct {
+	line, col int
+}
+
 func (i item) String() string {
-	switch {
-	case i.typ == itemEof:
-		return "eof"
-	case i.typ == itemError:
-		return i.val
-	}
-	return fmt.Sprintf("%s:%q", i.typ, i.val)
+	return fmt.Sprintf("%s:%q(%d,%d)", i.typ, i.val, i.pos.line, i.pos.col)
 }
 
 type itemType int
@@ -55,6 +53,10 @@ func (t itemType) String() string {
 		return "doubleLiteral"
 	case itemEol:
 		return "eol"
+	case itemEof:
+		return "eof"
+	case itemError:
+		return "error"
 	default:
 		panic(errors.New("unexpected itemType"))
 	}
@@ -66,8 +68,8 @@ type lexer struct {
 	input  *bufio.Reader
 	buffer bytes.Buffer
 	state  stateFn
-	pos    int
-	start  int
+	pos    pos
+	start  pos
 	items  chan item
 }
 
@@ -80,6 +82,8 @@ func lex(input io.Reader) *lexer {
 	l := &lexer{
 		input: bufio.NewReader(input),
 		items: make(chan item),
+		pos:   pos{line: 1, col: 1},
+		start: pos{line: 1, col: 1},
 	}
 	go l.run()
 	return l
@@ -96,7 +100,13 @@ func (l *lexer) next() rune {
 	if err == io.EOF {
 		return eof
 	}
-	l.pos += w
+	if r != '\n' {
+		l.pos.col += w
+	} else {
+		l.pos.line++
+		l.pos.col = 1
+	}
+
 	l.buffer.WriteRune(r)
 	return r
 }
@@ -201,6 +211,9 @@ LOOP:
 		default:
 			if strings.IndexRune("0123456789", r) >= 0 {
 				return lexDoubleLiteral
+			} else {
+				l.errorf("unexpected character")
+				l.next()
 			}
 		}
 	}
@@ -209,11 +222,10 @@ LOOP:
 }
 
 func lexDoubleLiteral(l *lexer) stateFn {
-	if l.accept("123456789") {
-		l.acceptRun("0123456789")
-	} else if !l.accept("0") {
+	if !l.accept("0123456789") {
 		return l.errorf("bad digit for number")
 	}
+	l.acceptRun("0123456789")
 	if l.accept(".") {
 		if !l.accept("0123456789") {
 			return l.errorf("digit not appear next to dot")
