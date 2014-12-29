@@ -19,39 +19,39 @@ type node interface {
 type nodeType int
 
 const (
-	nodeOp nodeType = iota
+	nodeBinaryOp nodeType = iota
 	nodeUnaryOp
 	nodeValue
 	nodeError
 )
 
-type opType int
+type binaryOpType int
 
 const (
-	opAdd opType = iota
-	opSub
-	opMul
-	opDiv
+	binaryOpAdd binaryOpType = iota
+	binaryOpSub
+	binaryOpMul
+	binaryOpDiv
 )
 
-type opNode struct {
-	opTyp    opType
+type binaryOpNode struct {
+	opTyp    binaryOpType
 	lhs, rhs node
 }
 
-func newOpNode(lhs node, rhs node, op opType) *opNode {
-	return &opNode{
+func newBinaryOpNode(lhs node, rhs node, op binaryOpType) *binaryOpNode {
+	return &binaryOpNode{
 		opTyp: op,
 		lhs:   lhs,
 		rhs:   rhs,
 	}
 }
 
-func (n *opNode) Type() nodeType {
-	return nodeOp
+func (n *binaryOpNode) Type() nodeType {
+	return nodeBinaryOp
 }
 
-func (n *opNode) Evaluate() value {
+func (n *binaryOpNode) Evaluate() value {
 	lv := n.lhs.Evaluate()
 	rv := n.rhs.Evaluate()
 	if lv.err != nil {
@@ -60,29 +60,29 @@ func (n *opNode) Evaluate() value {
 		return value{0, rv.err}
 	}
 	switch n.opTyp {
-	case opAdd:
+	case binaryOpAdd:
 		return value{lv.v + rv.v, nil}
-	case opSub:
+	case binaryOpSub:
 		return value{lv.v - rv.v, nil}
-	case opMul:
+	case binaryOpMul:
 		return value{lv.v * rv.v, nil}
-	case opDiv:
+	case binaryOpDiv:
 		return value{lv.v / rv.v, nil}
 	default:
 		return value{0, errors.New("unexpected opTyp")}
 	}
 }
 
-func (n *opNode) String() string {
+func (n *binaryOpNode) String() string {
 	var opStr string
 	switch n.opTyp {
-	case opAdd:
+	case binaryOpAdd:
 		opStr = "+"
-	case opSub:
+	case binaryOpSub:
 		opStr = "-"
-	case opMul:
+	case binaryOpMul:
 		opStr = "*"
-	case opDiv:
+	case binaryOpDiv:
 		opStr = "/"
 	default:
 		opStr = fmt.Sprintf("%d", n.opTyp)

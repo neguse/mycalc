@@ -76,12 +76,12 @@ func (p *parser) expression() node {
 	for {
 		if p.peek().typ == itemAdd || p.peek().typ == itemSub {
 			op := p.next()
-			var t opType
+			var t binaryOpType
 			switch op.typ {
 			case itemAdd:
-				t = opAdd
+				t = binaryOpAdd
 			case itemSub:
-				t = opSub
+				t = binaryOpSub
 			default:
 				panic("unknown itemType")
 			}
@@ -90,7 +90,7 @@ func (p *parser) expression() node {
 				return t2
 			}
 			// FIXME: Fix to left-to-right associative.
-			t1 = newOpNode(t1, t2, t)
+			t1 = newBinaryOpNode(t1, t2, t)
 		} else {
 			break
 		}
@@ -106,12 +106,12 @@ func (p *parser) term() node {
 	for {
 		if p.peek().typ == itemMul || p.peek().typ == itemDiv {
 			op := p.next()
-			var t opType
+			var t binaryOpType
 			switch op.typ {
 			case itemMul:
-				t = opMul
+				t = binaryOpMul
 			case itemDiv:
-				t = opDiv
+				t = binaryOpDiv
 			default:
 				panic("unknown itemType")
 			}
@@ -120,7 +120,7 @@ func (p *parser) term() node {
 				return e2
 			}
 			// FIXME: Fix to left-to-right associative.
-			e1 = newOpNode(e1, e2, t)
+			e1 = newBinaryOpNode(e1, e2, t)
 		} else {
 			break
 		}
