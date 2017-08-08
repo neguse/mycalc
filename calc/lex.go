@@ -35,7 +35,7 @@ const (
 	itemLParen
 	itemRParen
 	itemEol
-	itemEof
+	itemEOF
 	itemError
 )
 
@@ -57,7 +57,7 @@ func (t itemType) String() string {
 		return "lparen"
 	case itemRParen:
 		return "rparen"
-	case itemEof:
+	case itemEOF:
 		return "eof"
 	case itemEol:
 		return "eol"
@@ -144,9 +144,8 @@ func runeLen(lead byte) int {
 		return 2
 	} else if lead < 0xF0 {
 		return 3
-	} else {
-		return 4
 	}
+	return 4
 }
 
 func (l *lexer) emit(t itemType) {
@@ -179,7 +178,7 @@ func (l *lexer) hasPrefix(prefix string) bool {
 	if err == io.EOF {
 		return false
 	} else if err != nil {
-		l.errorf("%v", err.Error)
+		l.errorf("%v", err.Error())
 		return false
 	}
 	return string(p) == prefix
@@ -223,13 +222,12 @@ LOOP:
 		default:
 			if strings.IndexRune("0123456789", r) >= 0 {
 				return lexDoubleLiteral
-			} else {
-				l.errorf("unexpected character")
-				l.next()
 			}
+			l.errorf("unexpected character")
+			l.next()
 		}
 	}
-	l.emit(itemEof)
+	l.emit(itemEOF)
 	return nil
 }
 

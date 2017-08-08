@@ -16,9 +16,8 @@ func (p *parser) nextValue() value {
 	v, ok := <-p.output
 	if ok {
 		return v
-	} else {
-		return value{0, errors.New("receive failed")}
 	}
+	return value{0, errors.New("receive failed")}
 }
 
 func parse(input chan item) *parser {
@@ -49,12 +48,12 @@ func (p *parser) next() item {
 }
 
 func (p *parser) parse() {
-	for p.peek().typ != itemEof {
+	for p.peek().typ != itemEOF {
 		exp := p.expression()
 		p.output <- exp.Evaluate()
 
 		// Skip to next eol for recovering error.
-		for p.peek().typ != itemEol && p.peek().typ != itemEof {
+		for p.peek().typ != itemEol && p.peek().typ != itemEOF {
 			// TODO: output as error
 			p.next()
 		}
@@ -147,10 +146,8 @@ func (p *parser) primaryExpression() node {
 		}
 		if !isMinus {
 			return n2
-		} else {
-			return newUnaryOpNode(n2, unaryOpMinus)
 		}
-
+		return newUnaryOpNode(n2, unaryOpMinus)
 	} else if n.typ != itemDoubleLiteral {
 		return newErrorNode("unexpected item")
 	}
@@ -161,7 +158,6 @@ func (p *parser) primaryExpression() node {
 
 	if !isMinus {
 		return newValueNode(v)
-	} else {
-		return newUnaryOpNode(newValueNode(v), unaryOpMinus)
 	}
+	return newUnaryOpNode(newValueNode(v), unaryOpMinus)
 }
