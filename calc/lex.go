@@ -34,7 +34,8 @@ const (
 	itemDoubleLiteral
 	itemLParen
 	itemRParen
-	itemEol
+	itemSushi
+	itemEOL
 	itemEOF
 	itemError
 )
@@ -57,9 +58,11 @@ func (t itemType) String() string {
 		return "lparen"
 	case itemRParen:
 		return "rparen"
+	case itemSushi:
+		return "sushi"
 	case itemEOF:
 		return "eof"
-	case itemEol:
+	case itemEOL:
 		return "eol"
 	case itemError:
 		return "error"
@@ -195,6 +198,11 @@ LOOP:
 	for {
 		r := l.peek()
 		switch r {
+		case '🍣':
+			l.next()
+			l.emit(itemSushi)
+		case ' ':
+			l.next()
 		case '+':
 			l.next()
 			l.emit(itemAdd)
@@ -215,7 +223,7 @@ LOOP:
 			l.emit(itemRParen)
 		case '\n':
 			l.next()
-			l.emit(itemEol)
+			l.emit(itemEOL)
 		case eof:
 			l.next()
 			break LOOP

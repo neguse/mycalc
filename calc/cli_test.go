@@ -28,6 +28,8 @@ var runTests = []runTest{
 	{"paren calc mul", "(1+2)*3", "9\n"},
 	{"unary minus", "-3", "-3\n"},
 	{"unary minus", "1--3", "4\n"},
+	{"sushi", "🍣", "980\n"},
+	{"double sushi", "🍣+🍣", "1960\n"},
 }
 
 func TestRun(t *testing.T) {

@@ -23,6 +23,7 @@ const (
 	nodeUnaryOp
 	nodeValue
 	nodeError
+	nodeSushi
 )
 
 type binaryOpType int
@@ -178,4 +179,23 @@ func (n *errorNode) Evaluate() value {
 
 func (n *errorNode) String() string {
 	return n.err
+}
+
+type sushiNode struct {
+}
+
+func newSushiNode() *sushiNode {
+	return &sushiNode{}
+}
+
+func (s *sushiNode) Type() nodeType {
+	return nodeSushi
+}
+
+func (s *sushiNode) Evaluate() value {
+	return value{980, nil}
+}
+
+func (s *sushiNode) String() string {
+	return "🍣"
 }

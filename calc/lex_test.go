@@ -20,6 +20,7 @@ var tEOF4 = item{itemEOF, pos{line: 1, col: 4}, ""}
 
 var lexTests = []lexTest{
 	{"empty", "", []item{tEOF1}},
+	{"space", " ", []item{item{itemEOF, origin, " "}}},
 	{"number1", "1", []item{item{itemDoubleLiteral, origin, "1"}, tEOF2}},
 	{"number11", "11", []item{item{itemDoubleLiteral, origin, "11"}, tEOF3}},
 	{"number0", "0", []item{item{itemDoubleLiteral, origin, "0"}, tEOF2}},
@@ -30,7 +31,7 @@ var lexTests = []lexTest{
 	{"i", "i", []item{item{itemError, origin, "unexpected character"}}},
 	{"two line", "1\n2", []item{
 		item{itemDoubleLiteral, origin, "1"},
-		item{itemEol, pos{line: 1, col: 2}, "\n"},
+		item{itemEOL, pos{line: 1, col: 2}, "\n"},
 		item{itemDoubleLiteral, pos{line: 2, col: 1}, "2"},
 		item{itemEOF, pos{line: 2, col: 2}, ""}}},
 	{"add", "1+2", []item{
@@ -112,7 +113,7 @@ var stringTests = []stringTest{
 	{"mul", item{itemMul, origin, "*"}, `mul:"*"(1,1)`},
 	{"div", item{itemDiv, origin, "/"}, `div:"/"(1,1)`},
 	{"doubleLiteral", item{itemDoubleLiteral, origin, "1.0"}, `doubleLiteral:"1.0"(1,1)`},
-	{"eol", item{itemEol, origin, ""}, `eol:""(1,1)`},
+	{"eol", item{itemEOL, origin, ""}, `eol:""(1,1)`},
 	{"eof", item{itemEOF, origin, ""}, `eof:""(1,1)`},
 	{"error", item{itemError, origin, "error"}, `error:"error"(1,1)`},
 }

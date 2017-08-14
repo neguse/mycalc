@@ -53,11 +53,11 @@ func (p *parser) parse() {
 		p.output <- exp.Evaluate()
 
 		// Skip to next eol for recovering error.
-		for p.peek().typ != itemEol && p.peek().typ != itemEOF {
+		for p.peek().typ != itemEOL && p.peek().typ != itemEOF {
 			// TODO: output as error
 			p.next()
 		}
-		if p.peek().typ == itemEol {
+		if p.peek().typ == itemEOL {
 			p.next()
 		}
 	}
@@ -129,7 +129,10 @@ func (p *parser) term() node {
 
 func (p *parser) primaryExpression() node {
 	isMinus := false
-	if p.peek().typ == itemSub {
+	if p.peek().typ == itemSushi {
+		p.next()
+		return newSushiNode()
+	} else if p.peek().typ == itemSub {
 		isMinus = true
 		p.next()
 	}
