@@ -28,7 +28,7 @@ var lexTests = []lexTest{
 	{"number1.", "1.", []item{item{itemError, origin, "digit not appear next to dot"}}},
 	{"number01", "01", []item{item{itemDoubleLiteral, origin, "01"}, tEOF3}},
 	{".", ".", []item{item{itemError, origin, "unexpected character"}}},
-	{"i", "i", []item{item{itemError, origin, "unexpected character"}}},
+	{"i", "i", []item{item{itemVariable, origin, "i"}, tEOF2}},
 	{"two line", "1\n2", []item{
 		item{itemDoubleLiteral, origin, "1"},
 		item{itemEOL, pos{line: 1, col: 2}, "\n"},
@@ -58,6 +58,11 @@ var lexTests = []lexTest{
 		item{itemLParen, origin, "("},
 		item{itemDoubleLiteral, pos{line: 1, col: 2}, "1"},
 		item{itemRParen, pos{line: 1, col: 3}, ")"},
+		tEOF4}},
+	{"assign", "a=1", []item{
+		item{itemVariable, origin, "a"},
+		item{itemAssign, pos{line: 1, col: 2}, "="},
+		item{itemDoubleLiteral, pos{line: 1, col: 3}, "1"},
 		tEOF4}},
 }
 
@@ -112,6 +117,7 @@ var stringTests = []stringTest{
 	{"sub", item{itemSub, origin, "-"}, `sub:"-"(1,1)`},
 	{"mul", item{itemMul, origin, "*"}, `mul:"*"(1,1)`},
 	{"div", item{itemDiv, origin, "/"}, `div:"/"(1,1)`},
+	{"assign", item{itemAssign, origin, "="}, `assign:"="(1,1)`},
 	{"doubleLiteral", item{itemDoubleLiteral, origin, "1.0"}, `doubleLiteral:"1.0"(1,1)`},
 	{"eol", item{itemEOL, origin, ""}, `eol:""(1,1)`},
 	{"eof", item{itemEOF, origin, ""}, `eof:""(1,1)`},

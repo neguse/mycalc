@@ -31,7 +31,9 @@ const (
 	itemSub
 	itemMul
 	itemDiv
+	itemAssign
 	itemDoubleLiteral
+	itemVariable
 	itemLParen
 	itemRParen
 	itemSushi
@@ -52,8 +54,12 @@ func (t itemType) String() string {
 		return "mul"
 	case itemDiv:
 		return "div"
+	case itemAssign:
+		return "assign"
 	case itemDoubleLiteral:
 		return "doubleLiteral"
+	case itemVariable:
+		return "variable"
 	case itemLParen:
 		return "lparen"
 	case itemRParen:
@@ -193,6 +199,10 @@ func (l *lexer) nextRuneCount(count int) {
 	}
 }
 
+var (
+	alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+)
+
 func lexInitial(l *lexer) stateFn {
 LOOP:
 	for {
@@ -215,6 +225,9 @@ LOOP:
 		case '/':
 			l.next()
 			l.emit(itemDiv)
+		case '=':
+			l.next()
+			l.emit(itemAssign)
 		case '(':
 			l.next()
 			l.emit(itemLParen)
@@ -230,6 +243,9 @@ LOOP:
 		default:
 			if strings.IndexRune("0123456789", r) >= 0 {
 				return lexDoubleLiteral
+			}
+			if strings.IndexRune(alphabets, r) >= 0 {
+				return lexVariable
 			}
 			l.errorf("unexpected character")
 			l.next()
@@ -251,5 +267,14 @@ func lexDoubleLiteral(l *lexer) stateFn {
 		l.acceptRun("0123456789")
 	}
 	l.emit(itemDoubleLiteral)
+	return lexInitial
+}
+
+func lexVariable(l *lexer) stateFn {
+	if !l.accept(alphabets) {
+		return l.errorf("bad variable")
+	}
+	l.acceptRun(alphabets)
+	l.emit(itemVariable)
 	return lexInitial
 }

@@ -30,6 +30,8 @@ var runTests = []runTest{
 	{"unary minus", "1--3", "4\n"},
 	{"sushi", "🍣", "980\n"},
 	{"double sushi", "🍣+🍣", "1960\n"},
+	{"assign", "answer=42\nanswer", "42\n42\n"},
+	{"unassigned", "x", "unassigned variable x\n"},
 }
 
 func TestRun(t *testing.T) {

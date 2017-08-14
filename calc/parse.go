@@ -1,29 +1,20 @@
 package mycalc
 
 import (
-	"errors"
 	"strconv"
 )
 
 type parser struct {
 	input     chan item
-	output    chan value
+	output    chan node
 	token     [1]item
 	peekCount int
-}
-
-func (p *parser) nextValue() value {
-	v, ok := <-p.output
-	if ok {
-		return v
-	}
-	return value{0, errors.New("receive failed")}
 }
 
 func parse(input chan item) *parser {
 	p := &parser{
 		input:  input,
-		output: make(chan value),
+		output: make(chan node),
 	}
 	go p.parse()
 	return p
@@ -50,7 +41,7 @@ func (p *parser) next() item {
 func (p *parser) parse() {
 	for p.peek().typ != itemEOF {
 		exp := p.expression()
-		p.output <- exp.Evaluate()
+		p.output <- exp
 
 		// Skip to next eol for recovering error.
 		for p.peek().typ != itemEOL && p.peek().typ != itemEOF {
@@ -132,7 +123,20 @@ func (p *parser) primaryExpression() node {
 	if p.peek().typ == itemSushi {
 		p.next()
 		return newSushiNode()
-	} else if p.peek().typ == itemSub {
+	}
+	if p.peek().typ == itemVariable {
+		v := p.next()
+		if p.peek().typ != itemAssign {
+			return newVariableRefNode(v.val)
+		}
+		p.next()
+		e := p.expression()
+		if e.Type() == nodeError {
+			return e
+		}
+		return newAssignNode(v.val, e)
+	}
+	if p.peek().typ == itemSub {
 		isMinus = true
 		p.next()
 	}

@@ -16,7 +16,9 @@ func RunString(line string, w io.Writer) {
 func RunReader(r io.Reader, w io.Writer) {
 	l := lex(r)
 	p := parse(l.items)
-	for v := range p.output {
+	e := newEnv()
+	for n := range p.output {
+		v := e.eval(n)
 		if v.err == nil {
 			fmt.Fprintln(w, v.v)
 		} else {

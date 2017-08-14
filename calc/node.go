@@ -1,7 +1,6 @@
 package mycalc
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -12,7 +11,6 @@ type value struct {
 
 type node interface {
 	Type() nodeType
-	Evaluate() value
 	String() string
 }
 
@@ -24,6 +22,8 @@ const (
 	nodeValue
 	nodeError
 	nodeSushi
+	nodeAssign
+	nodeVariableRef
 )
 
 type binaryOpType int
@@ -50,28 +50,6 @@ func newBinaryOpNode(lhs node, rhs node, op binaryOpType) *binaryOpNode {
 
 func (n *binaryOpNode) Type() nodeType {
 	return nodeBinaryOp
-}
-
-func (n *binaryOpNode) Evaluate() value {
-	lv := n.lhs.Evaluate()
-	rv := n.rhs.Evaluate()
-	if lv.err != nil {
-		return value{0, lv.err}
-	} else if rv.err != nil {
-		return value{0, rv.err}
-	}
-	switch n.opTyp {
-	case binaryOpAdd:
-		return value{lv.v + rv.v, nil}
-	case binaryOpSub:
-		return value{lv.v - rv.v, nil}
-	case binaryOpMul:
-		return value{lv.v * rv.v, nil}
-	case binaryOpDiv:
-		return value{lv.v / rv.v, nil}
-	default:
-		return value{0, errors.New("unexpected opTyp")}
-	}
 }
 
 func (n *binaryOpNode) String() string {
@@ -113,19 +91,6 @@ func (n *unaryOpNode) Type() nodeType {
 	return nodeUnaryOp
 }
 
-func (n *unaryOpNode) Evaluate() value {
-	ov := n.operand.Evaluate()
-	if ov.err != nil {
-		return value{0, ov.err}
-	}
-	switch n.opTyp {
-	case unaryOpMinus:
-		return value{-ov.v, nil}
-	default:
-		return value{0, errors.New("unexpected opTyp")}
-	}
-}
-
 func (n *unaryOpNode) String() string {
 	var opStr string
 	switch n.opTyp {
@@ -151,10 +116,6 @@ func (n *valueNode) Type() nodeType {
 	return nodeValue
 }
 
-func (n *valueNode) Evaluate() value {
-	return value{n.v, nil}
-}
-
 func (n *valueNode) String() string {
 	return fmt.Sprintf("%f", n.v)
 }
@@ -173,10 +134,6 @@ func (n *errorNode) Type() nodeType {
 	return nodeError
 }
 
-func (n *errorNode) Evaluate() value {
-	return value{0, errors.New(n.err)}
-}
-
 func (n *errorNode) String() string {
 	return n.err
 }
@@ -192,10 +149,39 @@ func (s *sushiNode) Type() nodeType {
 	return nodeSushi
 }
 
-func (s *sushiNode) Evaluate() value {
-	return value{980, nil}
-}
-
 func (s *sushiNode) String() string {
 	return "🍣"
+}
+
+type assignNode struct {
+	variable string
+	expr     node
+}
+
+func newAssignNode(v string, e node) *assignNode {
+	return &assignNode{variable: v, expr: e}
+}
+
+func (a *assignNode) Type() nodeType {
+	return nodeAssign
+}
+
+func (a *assignNode) String() string {
+	return fmt.Sprint(a.variable, "=")
+}
+
+type variableRefNode struct {
+	variable string
+}
+
+func newVariableRefNode(v string) *variableRefNode {
+	return &variableRefNode{variable: v}
+}
+
+func (v *variableRefNode) Type() nodeType {
+	return nodeVariableRef
+}
+
+func (v *variableRefNode) String() string {
+	return v.variable
 }
