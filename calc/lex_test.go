@@ -20,7 +20,7 @@ var tEOF4 = item{itemEOF, pos{line: 1, col: 4}, ""}
 
 var lexTests = []lexTest{
 	{"empty", "", []item{tEOF1}},
-	{"space", " ", []item{item{itemEOF, origin, " "}}},
+	{"space", " ", []item{item{itemEOF, pos{line: 1, col: 2}, ""}}},
 	{"number1", "1", []item{item{itemDoubleLiteral, origin, "1"}, tEOF2}},
 	{"number11", "11", []item{item{itemDoubleLiteral, origin, "11"}, tEOF3}},
 	{"number0", "0", []item{item{itemDoubleLiteral, origin, "0"}, tEOF2}},
@@ -34,6 +34,11 @@ var lexTests = []lexTest{
 		item{itemEOL, pos{line: 1, col: 2}, "\n"},
 		item{itemDoubleLiteral, pos{line: 2, col: 1}, "2"},
 		item{itemEOF, pos{line: 2, col: 2}, ""}}},
+	{"two number", "1 2", []item{
+		item{itemDoubleLiteral, origin, "1"},
+		item{itemDoubleLiteral, pos{line: 1, col: 3}, "2"},
+		item{itemEOF, pos{line: 1, col: 4}, ""},
+	}},
 	{"add", "1+2", []item{
 		item{itemDoubleLiteral, origin, "1"},
 		item{itemAdd, pos{line: 1, col: 2}, "+"},

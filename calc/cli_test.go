@@ -34,6 +34,7 @@ var runTests = []runTest{
 	{"unassigned", "x", "unassigned variable x\n"},
 	{"unassigned2", "2*pi", "unassigned variable pi\n"},
 	{"unassigned3", "a=a", "unassigned variable a\n"},
+	{"two number", "1 2", "1\n2\n"},
 }
 
 func TestRun(t *testing.T) {

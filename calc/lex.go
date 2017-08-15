@@ -163,6 +163,11 @@ func (l *lexer) emit(t itemType) {
 	l.buffer.Truncate(0)
 }
 
+func (l *lexer) truncate() {
+	l.start = l.pos
+	l.buffer.Truncate(0)
+}
+
 func (l *lexer) accept(valid string) bool {
 	if strings.IndexRune(valid, l.peek()) >= 0 {
 		l.next()
@@ -213,6 +218,7 @@ LOOP:
 			l.emit(itemSushi)
 		case ' ':
 			l.next()
+			l.truncate()
 		case '+':
 			l.next()
 			l.emit(itemAdd)

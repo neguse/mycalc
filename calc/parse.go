@@ -44,10 +44,14 @@ func (p *parser) parse() {
 		p.output <- exp
 
 		// Skip to next eol for recovering error.
-		for p.peek().typ != itemEOL && p.peek().typ != itemEOF {
-			// TODO: output as error
-			p.next()
+		if exp.Type() == nodeError {
+			for p.peek().typ != itemEOL && p.peek().typ != itemEOF {
+				// TODO: output as error
+				p.next()
+			}
 		}
+
+		// Skip EOL
 		if p.peek().typ == itemEOL {
 			p.next()
 		}
