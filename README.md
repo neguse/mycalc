@@ -12,7 +12,7 @@ I made this for learning parser algorithm.
 References
 ----------
 
-- [Lexical Scanning in Go](http://rspace.googlecode.com/hg/slide/lex.html)
+- [Lexical Scanning in Go](https://talks.golang.org/2011/lex.slide)
 - [Goでlexerを作る](http://qiita.com/hnakamur/items/ae5f150b9fbb9069ded4)
 
 This program strongly refers [text/template](http://golang.org/src/text/template/parse/)'s lex.go and parse.go.
