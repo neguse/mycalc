@@ -20,7 +20,13 @@ func (e env) eval(n node) value {
 	case nodeBinaryOp:
 		nn := n.(*binaryOpNode)
 		left := e.eval(nn.lhs)
+		if left.err != nil {
+			return left
+		}
 		right := e.eval(nn.rhs)
+		if right.err != nil {
+			return right
+		}
 		switch nn.opTyp {
 		case binaryOpAdd:
 			return value{v: left.v + right.v, err: nil}
@@ -36,6 +42,9 @@ func (e env) eval(n node) value {
 	case nodeUnaryOp:
 		nn := n.(*unaryOpNode)
 		v := e.eval(nn.operand)
+		if v.err != nil {
+			return v
+		}
 		switch nn.opTyp {
 		case unaryOpMinus:
 			return value{v: -v.v, err: nil}
@@ -53,6 +62,9 @@ func (e env) eval(n node) value {
 	case nodeAssign:
 		nn := n.(*assignNode)
 		v := e.eval(nn.expr)
+		if v.err != nil {
+			return v
+		}
 		e.global[nn.variable] = v
 		return value{v: v.v, err: nil}
 	case nodeVariableRef:
